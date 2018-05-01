@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 25 10:17:05 2018
-
-@author: amedinam
-"""
-
 import numpy as np
 import itertools
 
@@ -18,8 +11,6 @@ def get_gr_gen(dim):
         gr_gen.append(els)
     
     return gr_gen
-
-#print(get_gr_gen(2))
 
 def get_gr_partial(dim): 
     '''returns the list whose d-entry is the np.array (matrix) representing the boundary map from d to (d-1)-chains 
@@ -43,8 +34,6 @@ def get_gr_partial(dim):
                         break
         
         gr_partial.append(partial_sub_degree)
-        #print(degree)     
-        #print(gr_partial[degree])
     
     return(gr_partial)
     
@@ -65,15 +54,18 @@ def get_tensor_gr_gen(dim):
 
 def get_gr_dim(gr_obj):
     '''returns the lenghts of the lists in a list'''
+    
     gr_dim = []    
     for l in gr_obj:
         gr_dim.append(len(l))
+
     return gr_dim
                 
 
-def get_dim_partial(dim):
-    '''computes the matrix representing the d-boundary in the tensor product 
+def get_tensor_partial(dim):
+    '''computes the matrix representing the dim-boundary in the tensor product 
     (with respect to the canonical basis lexicografically ordered)'''
+
     gr_dim = get_gr_dim(get_gr_gen(dim))
     gr_partial = get_gr_partial(dim)
     
@@ -83,8 +75,7 @@ def get_dim_partial(dim):
         ver_len = gr_dim[i]*gr_dim[dim-1-i]
         block = np.full((ver_len,1),ver_len,dtype=int)
         hor_stack = np.vstack((hor_stack,block))
-    
-    
+        
     #constructs and stacks the blocks
     for i in range(dim+1):
         hor_len = gr_dim[i]*gr_dim[dim-i]
@@ -109,9 +100,9 @@ def get_dim_partial(dim):
     
     #deleting first row and column
     hor_stack = np.delete(hor_stack, (0), axis=0)    
-    matrix = np.delete(hor_stack, (0), axis=1)    
+    out_matrix = np.delete(hor_stack, (0), axis=1)    
 
-    return matrix
+    return out_matrix
     
 
 def get_partial(face):
@@ -123,9 +114,8 @@ def get_partial(face):
         di_face = list(face)
         di_face.pop(i)
         partial.append([(-1)**i,di_face])
-    return(partial)
 
-#print(get_partial([0,1,2]))
+    return(partial)
 
 def get_diag(sign,face):
     '''given a signed face, [plus/minus 1, [u,v,...,w]], it returns the 
@@ -135,11 +125,14 @@ def get_diag(sign,face):
     diag = []
     for i in face:
         diag.append([sign,face[:face.index(i)+1],face[face.index(i):]])
+
     return(diag)
 
 
 def get_diag_partial(dim):
-
+    '''returns the vector, with entries: -1, 0 or 1, representing the linear combination 
+    obtained by taking boundary and then the standard diagonal'''
+    
     simplex = list(range(dim+1))    
     partial = get_partial(simplex)
     
@@ -149,9 +142,9 @@ def get_diag_partial(dim):
         diag_partial.extend(aux)
         
     tensor_gen = get_tensor_gr_gen(dim)[dim-1]    
-    out_vector = np.zeros((len(tensor_gen),1),dtype=int)
+    out_vector = np.zeros((len(tensor_gen),1),dtype=int)    
     
-    for gen in tensor_gen:
+    for gen in tensor_gen: #constructs the vector representing the linear combination
         for term in diag_partial:
             if gen == term[1:]:
                 out_vector[tensor_gen.index(gen)] = term[0]
@@ -159,7 +152,16 @@ def get_diag_partial(dim):
     return out_vector
 
 
-dim = 3
+dim = 2
+#print(get_tensor_partial(dim))
 print(get_diag_partial(dim))
 
-        
+from sympy import Matrix
+
+P = Matrix(get_tensor_partial(dim))
+print(P)
+P = P.col_insert(4, Matrix(get_diag_partial(dim)))
+print(P)
+
+print(len(P.columnspace()))
+print(P.rref())        
