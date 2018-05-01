@@ -9,8 +9,8 @@ import numpy as np
 import itertools
 
 def get_gr_gen(dim):
-
-    '''returns the list whose d-entry is the lexicographically ordered list of d-faces of the (dim)-simplex'''  
+    '''returns the list whose d-entry is the lexicographically ordered list of 
+    d-faces of the (dim)-simplex'''  
 
     gr_gen = []
     for i in range(dim+1):
@@ -19,8 +19,9 @@ def get_gr_gen(dim):
     
     return gr_gen
 
+#print(get_gr_gen(2))
+
 def get_gr_partial(dim): 
-    
     '''returns the list whose d-entry is the np.array (matrix) representing the boundary map from d to (d-1)-chains 
     of the standard (dim)-simplex with bases lexicographically ordered'''
 
@@ -48,7 +49,6 @@ def get_gr_partial(dim):
     return(gr_partial)
     
 def get_tensor_gr_gen(dim):        
-    
     '''returns the list whose d-entry is the lexicographically ordered list of pairs of faces 
     of the (dim)-simplex whose dimensions add to d'''      
 
@@ -64,7 +64,6 @@ def get_tensor_gr_gen(dim):
     
 
 def get_gr_dim(gr_obj):
-    
     '''returns the lenghts of the lists in a list'''
     gr_dim = []    
     for l in gr_obj:
@@ -73,7 +72,6 @@ def get_gr_dim(gr_obj):
                 
 
 def get_dim_partial(dim):
-    
     '''computes the matrix representing the d-boundary in the tensor product 
     (with respect to the canonical basis lexicografically ordered)'''
     gr_dim = get_gr_dim(get_gr_gen(dim))
@@ -109,14 +107,59 @@ def get_dim_partial(dim):
             
         hor_stack = np.hstack((hor_stack,ver_stack))
     
-    #taking deliting first row and column
+    #deleting first row and column
     hor_stack = np.delete(hor_stack, (0), axis=0)    
     matrix = np.delete(hor_stack, (0), axis=1)    
 
     return matrix
     
-    
-dim = 3
 
-print(get_dim_partial(dim))
-  
+def get_partial(face):
+    '''given a face it returns the lexicographically 
+    order list of generators appearing in its boundary'''
+
+    partial = []
+    for i in face:
+        di_face = list(face)
+        di_face.pop(i)
+        partial.append([(-1)**i,di_face])
+    return(partial)
+
+#print(get_partial([0,1,2]))
+
+def get_diag(sign,face):
+    '''given a signed face, [plus/minus 1, [u,v,...,w]], it returns the 
+    list of signed generators, [plus/minus 1, [[u,v],[v,...,w]]], appearing 
+    in its standard diagonal'''
+    
+    diag = []
+    for i in face:
+        diag.append([sign,face[:face.index(i)+1],face[face.index(i):]])
+    return(diag)
+
+
+def get_diag_partial(dim):
+
+    simplex = list(range(dim+1))    
+    partial = get_partial(simplex)
+    
+    diag_partial = []
+    for face in partial: #computes all signed terms in the diagonal of the boundary
+        aux = get_diag(face[0],face[1])
+        diag_partial.extend(aux)
+        
+    tensor_gen = get_tensor_gr_gen(dim)[dim-1]    
+    out_vector = np.zeros((len(tensor_gen),1),dtype=int)
+    
+    for gen in tensor_gen:
+        for term in diag_partial:
+            if gen == term[1:]:
+                out_vector[tensor_gen.index(gen)] = term[0]
+    
+    return out_vector
+
+
+dim = 3
+print(get_diag_partial(dim))
+
+        
