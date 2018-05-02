@@ -1,3 +1,4 @@
+
 import numpy as np
 import itertools
 
@@ -76,10 +77,12 @@ def get_tensor_partial(dim):
         block = np.full((ver_len,1),ver_len,dtype=int)
         hor_stack = np.vstack((hor_stack,block))
         
+   
     #constructs and stacks the blocks
-    for i in range(dim+1):
+    for i in range(dim+1):        
         hor_len = gr_dim[i]*gr_dim[dim-i]
         ver_stack = np.full((1,hor_len),hor_len,dtype=int) #constructs the first row   
+        ith_sign = 1
         
         for j in range(dim):
             ver_len = gr_dim[j]*gr_dim[dim-1-j]
@@ -90,11 +93,13 @@ def get_tensor_partial(dim):
                 
             elif dim-j == dim-i: #1xd
                 identity = np.eye(gr_dim[i],dtype=int)
-                block = np.kron(identity,gr_partial[dim-i])
+                block = np.kron(identity,ith_sign*gr_partial[dim-i])
                 
             else: 
                 block = np.zeros((ver_len,hor_len),dtype=int)
+            
             ver_stack = np.vstack((ver_stack,block))
+            ith_sign *= -1
             
         hor_stack = np.hstack((hor_stack,ver_stack))
     
@@ -102,19 +107,20 @@ def get_tensor_partial(dim):
     hor_stack = np.delete(hor_stack, (0), axis=0)    
     out_matrix = np.delete(hor_stack, (0), axis=1)    
 
-    return out_matrix
-    
+    return out_matrix   
+
 
 def get_partial(face):
     '''given a face it returns the lexicographically 
     order list of generators appearing in its boundary'''
 
     partial = []
+    ith_sign = 1
     for i in face:
         di_face = list(face)
         di_face.pop(i)
-        partial.append([(-1)**i,di_face])
-
+        partial.append([ith_sign,di_face])
+        ith_sign *= (-1)
     return(partial)
 
 def get_diag(sign,face):
@@ -152,16 +158,40 @@ def get_diag_partial(dim):
     return out_vector
 
 
-dim = 2
-#print(get_tensor_partial(dim))
-print(get_diag_partial(dim))
-
 from sympy import Matrix
 
-P = Matrix(get_tensor_partial(dim))
-print(P)
-P = P.col_insert(4, Matrix(get_diag_partial(dim)))
-print(P)
+dim = 2
 
-print(len(P.columnspace()))
-print(P.rref())        
+P = Matrix(get_tensor_partial(dim))
+len_col = 15
+
+P = P.col_insert(len_col, Matrix(get_diag_partial(dim)))
+
+reduced_matrix = P.rref()
+
+print(reduced_matrix)
+
+truth_array = []
+
+pivots = reduced_matrix[1]
+print(pivots)
+free_vars = []
+for i in range(15+1):
+    if i not in pivots:
+        
+        print('not in', i)
+    elif i in pivots:
+#        truth_array.append(false)
+        print('in pivots')
+
+solutions = []
+
+for i in range(15+1):
+        
+    print('test')
+
+dic = {'a':1,'b':2}
+
+print(dic['a'])
+
+#print(P.rref())        
