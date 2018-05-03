@@ -162,36 +162,40 @@ from sympy import Matrix
 
 dim = 2
 
-P = Matrix(get_tensor_partial(dim))
-len_col = 15
+M = Matrix(get_tensor_partial(dim))
+len_col = M.shape[1]
+M = M.col_insert(len_col, Matrix(get_diag_partial(dim)))
 
-P = P.col_insert(len_col, Matrix(get_diag_partial(dim)))
+red_matrix = M.rref()[0]
+print('reduced matrix\n', red_matrix)
+pivots = M.rref()[1]
+print('pivots\n', pivots)
 
-reduced_matrix = P.rref()
+free_vars = list(range(len_col+1))
+for i in pivots:
+    free_vars.remove(i)
+print('"augmented" free variables\n',free_vars)
 
-print(reduced_matrix)
+dict_free_vars = {}
+for i in free_vars:
+    dict_free_vars[i] = 'v_'+str(free_vars.index(i))    
+print('dictionary for free columns\n', dict_free_vars)
 
-truth_array = []
-
-pivots = reduced_matrix[1]
-print(pivots)
-free_vars = []
-for i in range(15+1):
-    if i not in pivots:
+relations = []
+row = 0
+for i in range(len_col+1):
+    
+    relations.append('')
+    
+    if i in free_vars:
+        relations[i] = relations[i] + dict_free_vars[i]
+        row += 1
         
-        print('not in', i)
-    elif i in pivots:
-#        truth_array.append(false)
-        print('in pivots')
-
-solutions = []
-
-for i in range(15+1):
-        
-    print('test')
-
-dic = {'a':1,'b':2}
-
-print(dic['a'])
-
-#print(P.rref())        
+    if i in pivots:
+        j = i+1
+        while i < j < len_col+1:
+            if red_matrix[i-row,j] != 0:
+                    relations[i] = relations[i] + dict_free_vars[j]
+            j += 1    
+    
+print('relations\n',relations)
