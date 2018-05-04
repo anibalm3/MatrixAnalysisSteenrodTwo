@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri May  4 14:22:43 2018
+
+@author: Anibal
+"""
+
 
 import numpy as np
 import itertools
@@ -162,50 +169,86 @@ def get_diag_partial(dim):
 
 def get_relations(dim):
     
+    #getting augmented matrix
     M = Matrix(get_tensor_partial(dim))
     len_col = M.shape[1]
     M = M.col_insert(len_col, Matrix(get_diag_partial(dim)))
     
+    #getting row reduced matrix and list of pivots
     red_matrix = M.rref()[0]
     print('reduced matrix\n', red_matrix)
     pivots = M.rref()[1]
     print('pivots\n', pivots)
     
-    free_vars = list(range(len_col+1))
-    for i in pivots:
-        free_vars.remove(i)
-    print('"augmented" free variables\n',free_vars)
-    
+    #a dictionary mapping from the column number of free variables to their name 
     dict_free_vars = {}
-    for i in free_vars:
-        dict_free_vars[i] = 'v_'+str(free_vars.index(i))    
-    print('dictionary for free columns\n', dict_free_vars)
     
+    j = 0
+    for i in range(len_col+1):
+        if i not in pivots:
+            dict_free_vars[i] = j
+            j += 1
+            
+    print('dictionary for free columns\n', dict_free_vars)
+   
     relations = []
     row = 0
-    for i in range(len_col+1):
+    for i in range(len_col): #not including last column
         
-        relations.append('')
-        
-        if i in free_vars:
-            relations[i] = relations[i] + dict_free_vars[i]
+        aux = []        
+        if i not in pivots:
+            aux = [i]
             row += 1
             
-        if i in pivots:
+        elif i in pivots:
             j = i+1
             while i < j < len_col+1:
                 if red_matrix[i-row,j] != 0:
-                        relations[i] = relations[i] + dict_free_vars[j]
+                        aux.append(j)
                 j += 1    
-        
-    return relations
+                
+        relations.append(aux)
+    print('dependance of column on free columns\n',relations)
+    return [dict_free_vars,relations]
+
+
 
 dim = 2
 
-print(get_relations(dim))
+dict_free_vars = get_relations(dim)[0]
+relations = get_relations(dim)[1]
 
-a = 'var_0var_1'
+free_vars = [-1,1,1,1,1,-1] 
 
-var_0 = 1
-var_1 = -1
+sol_vect = []
+for i in range(len(relations)):
+    aux = 1
+    for j in relations[i]:
+        aux *= free_vars[dict_free_vars[j]]
+    
+    if aux == 1:
+        sol_vect.append(0)
+    
+    elif aux == -1:
+        sol_vect.append(1)
+        
+print('solution vector\n',sol_vect)
 
+
+basis = get_tensor_gr_gen(dim)[dim]
+
+aux = ''
+for i in range(len(sol_vect)):
+    if sol_vect[i] == 1:
+        if i != 0:
+            aux += ' + '+str(basis[i])
+            
+aux = aux.replace('], [',']x[')
+aux = aux.replace('] + [','+')
+aux = aux.replace(', ',',')
+aux = aux.replace('+','',1)
+aux = aux.replace(']]',']')
+aux = aux.replace('[[','[')
+
+
+print('solution\n',aux)
