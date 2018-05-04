@@ -1,6 +1,8 @@
 
 import numpy as np
 import itertools
+from sympy import Matrix
+
 
 def get_gr_gen(dim):
     '''returns the list whose d-entry is the lexicographically ordered list of 
@@ -158,44 +160,51 @@ def get_diag_partial(dim):
     return out_vector
 
 
-from sympy import Matrix
+def get_relations(dim):
+    dim = 2
+    
+    M = Matrix(get_tensor_partial(dim))
+    len_col = M.shape[1]
+    M = M.col_insert(len_col, Matrix(get_diag_partial(dim)))
+    
+    red_matrix = M.rref()[0]
+    print('reduced matrix\n', red_matrix)
+    pivots = M.rref()[1]
+    print('pivots\n', pivots)
+    
+    free_vars = list(range(len_col+1))
+    for i in pivots:
+        free_vars.remove(i)
+    print('"augmented" free variables\n',free_vars)
+    
+    dict_free_vars = {}
+    for i in free_vars:
+        dict_free_vars[i] = 'v_'+str(free_vars.index(i))    
+    print('dictionary for free columns\n', dict_free_vars)
+    
+    relations = []
+    row = 0
+    for i in range(len_col+1):
+        
+        relations.append('')
+        
+        if i in free_vars:
+            relations[i] = relations[i] + dict_free_vars[i]
+            row += 1
+            
+        if i in pivots:
+            j = i+1
+            while i < j < len_col+1:
+                if red_matrix[i-row,j] != 0:
+                        relations[i] = relations[i] + dict_free_vars[j]
+                j += 1    
+        
+    return relations
 
 dim = 2
 
-M = Matrix(get_tensor_partial(dim))
-len_col = M.shape[1]
-M = M.col_insert(len_col, Matrix(get_diag_partial(dim)))
+a = 'var_0var_1'
 
-red_matrix = M.rref()[0]
-print('reduced matrix\n', red_matrix)
-pivots = M.rref()[1]
-print('pivots\n', pivots)
+var_0 = 1
+var_1 = -1
 
-free_vars = list(range(len_col+1))
-for i in pivots:
-    free_vars.remove(i)
-print('"augmented" free variables\n',free_vars)
-
-dict_free_vars = {}
-for i in free_vars:
-    dict_free_vars[i] = 'v_'+str(free_vars.index(i))    
-print('dictionary for free columns\n', dict_free_vars)
-
-relations = []
-row = 0
-for i in range(len_col+1):
-    
-    relations.append('')
-    
-    if i in free_vars:
-        relations[i] = relations[i] + dict_free_vars[i]
-        row += 1
-        
-    if i in pivots:
-        j = i+1
-        while i < j < len_col+1:
-            if red_matrix[i-row,j] != 0:
-                    relations[i] = relations[i] + dict_free_vars[j]
-            j += 1    
-    
-print('relations\n',relations)
