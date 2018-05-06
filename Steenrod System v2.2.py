@@ -1,9 +1,15 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun May  6 12:01:47 2018
+
+@author: Anibal
+"""
+
 import numpy as np
 import itertools
 from sympy import Matrix
 
-#dim = 3
-
+dim = 2
 
 def get_gr_gen(dim):
     '''returns the list whose d-entry is the lexicographically ordered list of 
@@ -19,11 +25,12 @@ def get_gr_gen(dim):
 #print('\ngraded generators for dim =',dim)
 #for d in range(dim+1):
 #    print('in degree',d,'\n',get_gr_gen(dim)[d])
-
+    
 
 def get_gr_partial(dim): 
-    '''returns the list whose d-entry is the np.array (matrix) representing the boundary map from d to (d-1)-chains 
-    of the standard (dim)-simplex with bases lexicographically ordered'''
+    '''returns the list whose d-entry is the np.array (matrix) representing the 
+    boundary map from d to (d-1)-chains of the standard (dim)-simplex with bases 
+    lexicographically ordered'''
 
     gr_gen = get_gr_gen(dim)         
     gr_partial = list()
@@ -48,7 +55,7 @@ def get_gr_partial(dim):
     
 #print('\ngraded partial for dim =',dim)
 #for d in range(dim+1):
-#    print('and degree',d,'\n',get_gr_partial(dim)[d] )    
+#    print('and degree',d,'\n',get_gr_partial(dim)[d])
 
 
 def get_tensor_gr_gen(dim):        
@@ -68,23 +75,17 @@ def get_tensor_gr_gen(dim):
 #print('\ngenerators for dim',dim)
 #for d in range(2*dim+1):
 #    print('in degree',d,'\n',get_tensor_gr_gen(dim)[d])
-
-
-def get_gr_dim(gr_obj):
-    '''returns the lenghts of the lists in a list'''
-    
-    gr_dim = []    
-    for l in gr_obj:
-        gr_dim.append(len(l))
-
-    return gr_dim
     
 
 def get_tensor_partial(dim):
     '''computes the matrix representing the dim-boundary in the tensor product 
     (with respect to the canonical basis lexicografically ordered)'''
 
-    gr_dim = get_gr_dim(get_gr_gen(dim))
+    gr_gen = get_gr_gen(dim)
+    gr_dim = []
+    for l in gr_gen:
+        gr_dim.append(len(l))
+    
     gr_partial = get_gr_partial(dim)
     
     #constructs the first column
@@ -126,36 +127,40 @@ def get_tensor_partial(dim):
     return out_matrix   
 
 #print('\npartial in degree',dim,'\n',get_tensor_partial(dim))
-                
-
-def get_boundary(face):
-    '''given a face it returns the lexicographically 
-    order list of signed generators appearing in its boundary'''
-
-    boundary = []
-    ith_sign = 1
-    for i in face:
-        di_face = list(face)
-        di_face.pop(i)
-        boundary.append([ith_sign,di_face])
-        ith_sign *= (-1)
-    return(boundary)
-
-def get_diag(sign,face):
-    '''given a signed face, [plus/minus 1, [u,v,...,w]], it returns the 
-    list of signed generators, [plus/minus 1, [[u,v],[v,...,w]]], appearing 
-    in its standard diagonal'''
-    
-    diag = []
-    for i in face:
-        diag.append([sign,face[:face.index(i)+1],face[face.index(i):]])
-
-    return(diag)
-
+        
 
 def get_diag_of_boundary(dim):
-    '''returns the vector, with entries: -1, 0 or 1, representing the linear combination 
-    obtained by taking boundary of the top dimensional generator and then applying the standard diagonal'''
+    '''returns the vector, with entries: -1, 0 or 1, representing the linear 
+    combination obtained by taking boundary of the top dimensional generator 
+    and then applying the standard diagonal'''
+    
+    
+    def get_boundary(face):
+        '''given a face it returns the lexicographically 
+        order list of signed generators appearing in its boundary'''
+    
+        boundary = []
+        ith_sign = 1
+        for i in face:
+            di_face = list(face)
+            di_face.pop(i)
+            boundary.append([ith_sign,di_face])
+            ith_sign *= (-1)
+        
+        return(boundary)
+
+    
+    def get_diag(sign,face):
+        '''given a signed face, [plus/minus 1, [u,v,...,w]], it returns the 
+        list of signed generators, [plus/minus 1, [[u,v],[v,...,w]]], appearing 
+        in its standard diagonal'''
+        
+        diag = []
+        for i in face:
+            diag.append([sign,face[:face.index(i)+1],face[face.index(i):]])
+    
+        return(diag)      
+    
     
     simplex = list(range(dim+1))    
     boundary = get_boundary(simplex)
@@ -176,7 +181,7 @@ def get_diag_of_boundary(dim):
     return out_vector
 
 #print('\ndiagonal of the boundary of the top generator\n',get_diag_of_boundary(dim))
-
+    
 
 def get_num_of_free_vars_and_relations(dim):
     '''row echelon reduces the augmented matrix representing the equation partial(Delta(dim))=(Delta(dim-1))partial 
@@ -217,9 +222,9 @@ def get_num_of_free_vars_and_relations(dim):
                 
         relations.append(aux)
     
-    return [len(dict_free_vars)-1,relations]
+    return [int(len(dict_free_vars)-1),relations]
 
-#print('number of free variables',get_num_of_free_vars_and_relations(dim)[0])
+#print('number of free variables\n',get_num_of_free_vars_and_relations(dim)[0])
 #print('all relations\n',get_num_of_free_vars_and_relations(dim)[1])
 
 
@@ -261,8 +266,12 @@ def sol_vect_to_sol(sol_vect):
     return(aux)
 
 
-def get_free_vars_set(exp):
+def get_free_vars_set(exp): #to big of a method
     '''return a list with the 2^exp posible values for the free variables'''
+    
+    if exp >= 21:
+        print('to many for an exponential method')
+        return
     
     free_vars_set = []
     for i in range(2**exp):
@@ -281,13 +290,18 @@ def get_free_vars_set(exp):
     
     return free_vars_set
 
+#print('set of all posible values for the free variables\n',get_free_vars_set(21))
+
 
 def get_all_solutions(dim):
     '''returns a list with all vector solutions'''
       
-    relations = get_num_of_free_vars_and_relations(dim)[0]
-    exp = get_num_of_free_vars_and_relations(dim)[1]
+    exp = get_num_of_free_vars_and_relations(dim)[0]
+    relations = get_num_of_free_vars_and_relations(dim)[1]
     free_vars_set = get_free_vars_set(exp)
+    if free_vars_set == None:
+        print('too big')
+        return
     
     all_solutions = []
     for free_vars in free_vars_set:
@@ -296,45 +310,35 @@ def get_all_solutions(dim):
         
     return all_solutions
 
+#print('all solutions\n',get_all_solutions(dim))
 
 
-def get_transp_pairs(dim):
+def get_gr_transp_pairs(dim):
     '''returns the set containing the pairs of generators that are equal up to 
     transposition'''
     
     gens = get_tensor_gr_gen(dim)[dim]
-    transp_pairs = set()
+    transp_pairs = []
     for gen in gens:
         neg=[gen[1],gen[0]]
         for gen2 in gens:
-            if gen2 == neg:
-                #print('for ', gens.index(gen),' found it at ',gens.index(gen2))
-                transp_pairs.add((gens.index(gen),gens.index(gen2)))
+            if gen2 == neg and gens.index(gen) <= gens.index(gen2):
+                transp_pairs.append((gens.index(gen),gens.index(gen2)))    
+
     
     return transp_pairs
 
-
-def get_free_solutions(dim):
-
-    all_solutions = get_all_solutions(dim)
-    transp_pairs = get_transp_pairs(dim)
-
-    free_solutions = []
-    for sol in all_solutions:
-        add_sol = True
-        for pair in transp_pairs:
-            #print(sol[pair[0]],sol[pair[1]])
-            if sol[pair[0]] == 1 and sol[pair[1]] == 1:
-                #print('gotta discart sol # ',all_solutions.index(sol),pair)
-                add_sol = False
-                break
-        if add_sol:
-            free_solutions.append(sol)  
-
-    return free_solutions
+#print('collection of basis elements related by transposition\n',get_transp_pairs(dim))
 
 
-dim = 2
+#print('collection of basis elements related by transposition\n',get_transp_pairs(dim))
+#print(get_num_of_free_vars_and_relations(dim)[1])
 
-print('the free solutions are:\n',get_free_solutions(dim))
+transp_pairs = get_transp_pairs(dim)
+relations = get_num_of_free_vars_and_relations(dim)[1]
+
+for pair in transp_pairs:
+    print(relations[pair[0]],relations[pair[1]])
+
+print(relations[pair[0]].remove(2))    
 
