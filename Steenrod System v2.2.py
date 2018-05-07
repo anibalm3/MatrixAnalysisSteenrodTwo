@@ -148,8 +148,7 @@ def get_diag_of_boundary(dim):
             ith_sign *= (-1)
         
         return(boundary)
-
-    
+   
     def get_diag(sign,face):
         '''given a signed face, [plus/minus 1, [u,v,...,w]], it returns the 
         list of signed generators, [plus/minus 1, [[u,v],[v,...,w]]], appearing 
@@ -160,8 +159,7 @@ def get_diag_of_boundary(dim):
             diag.append([sign,face[:face.index(i)+1],face[face.index(i):]])
     
         return(diag)      
-    
-    
+       
     simplex = list(range(dim+1))    
     boundary = get_boundary(simplex)
     
@@ -182,10 +180,10 @@ def get_diag_of_boundary(dim):
 
 #print('\ndiagonal of the boundary of the top generator\n',get_diag_of_boundary(dim))
     
-
+'''
 def get_num_of_free_vars_and_relations(dim):
-    '''row echelon reduces the augmented matrix representing the equation partial(Delta(dim))=(Delta(dim-1))partial 
-    identifying the positions of the free columns and the relations determining the pivot columns w/r to these'''
+    #row echelon reduces the augmented matrix representing the equation partial(Delta(dim))=(Delta(dim-1))partial 
+    #identifying the positions of the free columns and the relations determining the pivot columns w/r to these
     
     #getting the augmented matrix
     M = Matrix(get_tensor_partial(dim))
@@ -226,95 +224,103 @@ def get_num_of_free_vars_and_relations(dim):
 
 #print('number of free variables\n',get_num_of_free_vars_and_relations(dim)[0])
 #print('all relations\n',get_num_of_free_vars_and_relations(dim)[1])
+'''
 
 
-def free_vars_to_sol_vect(free_vars,relations):
-    '''from a choice of values for the free variables, it produces the associated solution vector'''
+def get_num_of_free_vars_and_relations(dim):
+    '''row echelon reduces the augmented matrix representing the equation 
+    partial(Delta(dim))=(Delta(dim-1))partial identifying the positions of the 
+    free columns and the relations determining the pivot columns w/r to these'''
     
-    sol_vect = []
-    for i in range(len(relations)):
-        aux = 1
-        for j in relations[i]:
-            aux *= free_vars[j]
+    #getting the augmented matrix
+    M = Matrix(get_tensor_partial(dim))
+    m = M.shape[1]
+    aug_M = M.col_insert(m, Matrix(get_diag_of_boundary(dim)))
+    
+    #getting the row reduced matrix and the list of pivots
+    red_M = aug_M.rref()[0]
+    pivots = aug_M.rref()[1]
+    
+    #a dictionary mapping from the column number of a free variables to their position in the list of free variables
+    dict_free_vars = {}
+    j = 0
+    for i in range(m+1):
+        if i not in pivots:
+            dict_free_vars[i] = j
+            j += 1
+    
+    relations = []
+    row = 0
+    for i in range(m): #not including last column
         
-        if aux == 1:
-            sol_vect.append(0)
-        
-        elif aux == -1:
-            sol_vect.append(1)
+        aux = []        
+        if i not in pivots:
+            aux = [dict_free_vars[i]]
+            row += 1
             
-    return sol_vect
-
-
-def sol_vect_to_sol(sol_vect):    
-    '''transforms a vector to a readable linear combination'''
-    
-    basis = get_tensor_gr_gen(dim)[dim]
-
-    aux = ''
-    for i in range(len(sol_vect)):
-        if sol_vect[i] == 1:
-            aux += ' + '+str(basis[i])
+        elif i in pivots:
+            j = i+1
+            while i < j < m+1:
+                if red_M[i-row,j] != 0:
+                        aux.append(dict_free_vars[j])
+                j += 1    
                 
-    aux = aux.replace('], [',']x[')
-    aux = aux.replace('] + [',' + ')
-    aux = aux.replace(', ',',')
-    aux = aux.replace('+','',1)
-    aux = aux.replace(']]',']')
-    aux = aux.replace('[[','[')
+        relations.append(aux)
     
-    return(aux)
+    return [int(len(dict_free_vars)-1),relations]
 
 
-def get_free_vars_set(exp): #to big of a method
-    '''return a list with the 2^exp posible values for the free variables'''
-    
-    if exp >= 21:
-        print('to many for an exponential method')
-        return
-    
-    free_vars_set = []
-    for i in range(2**exp):
-        aux = []
-        for j in reversed(bin(i)):
-            if j == 'b':
-                for k in range(exp-len(aux)):
-                    aux.append(1)
-                break
-            elif j == '0':
-                aux.append(1)
-            elif j == '1':
-                aux.append(-1)
-        aux.append(-1)
-        free_vars_set.append(aux)
-    
-    return free_vars_set
-
-#print('set of all posible values for the free variables\n',get_free_vars_set(21))
+#print(get_num_of_free_vars_and_relations(2))
 
 
-def get_all_solutions(dim):
-    '''returns a list with all vector solutions'''
-      
-    exp = get_num_of_free_vars_and_relations(dim)[0]
-    relations = get_num_of_free_vars_and_relations(dim)[1]
-    free_vars_set = get_free_vars_set(exp)
-    if free_vars_set == None:
-        print('too big')
-        return
+
+def get_relations(dim):
+    '''returns a list, each entry corresponds to a column of the non-augmented reduced 
+    matrix and it contains a list with the coefficients in terms of free variables and the vector b'''
     
-    all_solutions = []
-    for free_vars in free_vars_set:
-        sol_vect = free_vars_to_sol_vect(free_vars,relations)
-        all_solutions.append(sol_vect)
+    #getting the augmented matrix
+    M = Matrix(get_tensor_partial(dim))
+    m = M.shape[1]
+    aug_M = M.col_insert(m, Matrix(get_diag_of_boundary(dim)))
+    
+    #getting the row reduced matrix and the list of pivots
+    red_M = aug_M.rref()[0]
+    pivots = aug_M.rref()[1]
+    
+    #a dictionary mapping from the column number of a free variables to their position in the list of free variables
+    dict_free_vars = {}
+    j = 0
+    for i in range(m+1):
+        if i not in pivots:
+            dict_free_vars[j] = i
+            j += 1
+    
+    #writting the dependance of every column to the free variables with the correct signs
+    relations = []
+    row = 0
+    p = len(dict_free_vars)
+    
+    for i in range(m): #not including last column
+        aux=[]
+        if i in pivots:
+            for k in range(p-1):
+                aux.append((-1)*red_M[i-row,dict_free_vars[k]])
+            aux.append(red_M[i-row,dict_free_vars[p-1]])
+            
+        elif i not in pivots:
+            for k in range(p):
+                aux.append(0)
+            aux[row] = 1
+            row += 1
+        relations.append(aux)
         
-    return all_solutions
+    return relations
 
-#print('all solutions\n',get_all_solutions(dim))
+#print(get_relations(dim))
 
 
-def get_gr_transp_pairs(dim):
-    '''returns the set containing the pairs of generators that are equal up to 
+def get_transp_pairs(dim):
+    '''returns the set containing the list with pairs of generators that are equal up to 
     transposition'''
     
     gens = get_tensor_gr_gen(dim)[dim]
@@ -325,20 +331,26 @@ def get_gr_transp_pairs(dim):
             if gen2 == neg and gens.index(gen) <= gens.index(gen2):
                 transp_pairs.append((gens.index(gen),gens.index(gen2)))    
 
-    
     return transp_pairs
 
-#print('collection of basis elements related by transposition\n',get_transp_pairs(dim))
+print('collection of basis elements related by transposition\n',get_transp_pairs(dim))
 
 
 #print('collection of basis elements related by transposition\n',get_transp_pairs(dim))
 #print(get_num_of_free_vars_and_relations(dim)[1])
 
-transp_pairs = get_transp_pairs(dim)
-relations = get_num_of_free_vars_and_relations(dim)[1]
-
-for pair in transp_pairs:
-    print(relations[pair[0]],relations[pair[1]])
-
-print(relations[pair[0]].remove(2))    
-
+'''def get_equations(dim):
+    pairs = get_transp_pairs(dim)
+    n = get_num_of_free_vars_and_relations(dim)[0]
+    rels = get_num_of_free_vars_and_relations(dim)[1]
+    
+    x = symbols('X0:%d'%n)
+    print(x)
+    
+    system = []
+    for pair in pairs:
+        print(rels[pair[0]],rels[pair[1]])
+        rels[pair[0]]
+    
+get_equations(2)
+'''

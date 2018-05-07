@@ -284,9 +284,10 @@ def get_free_vars_set(exp):
 
 def get_all_solutions(dim):
     '''returns a list with all vector solutions'''
-      
-    relations = get_num_of_free_vars_and_relations(dim)[0]
-    exp = get_num_of_free_vars_and_relations(dim)[1]
+    
+    exp = get_num_of_free_vars_and_relations(dim)[0]
+    relations = get_num_of_free_vars_and_relations(dim)[1]
+    
     free_vars_set = get_free_vars_set(exp)
     
     all_solutions = []
