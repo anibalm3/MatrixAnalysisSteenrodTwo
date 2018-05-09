@@ -5,9 +5,11 @@ Created on Sun May  6 12:01:47 2018
 @author: Anibal
 """
 
+
 import numpy as np
 import itertools
-from sympy import Matrix
+import sympy as sp
+from sympy import *
 
 dim = 2
 
@@ -179,99 +181,6 @@ def get_diag_of_boundary(dim):
     return out_vector
 
 #print('\ndiagonal of the boundary of the top generator\n',get_diag_of_boundary(dim))
-    
-'''
-def get_num_of_free_vars_and_relations(dim):
-    #row echelon reduces the augmented matrix representing the equation partial(Delta(dim))=(Delta(dim-1))partial 
-    #identifying the positions of the free columns and the relations determining the pivot columns w/r to these
-    
-    #getting the augmented matrix
-    M = Matrix(get_tensor_partial(dim))
-    len_col = M.shape[1]
-    M = M.col_insert(len_col, Matrix(get_diag_of_boundary(dim)))
-    
-    #getting the row reduced matrix and the list of pivots
-    red_matrix = M.rref()[0]
-    pivots = M.rref()[1]
-    
-    #a dictionary mapping from the column number of a free variables to their position in the list of free variables
-    dict_free_vars = {}
-    j = 0
-    for i in range(len_col+1):
-        if i not in pivots:
-            dict_free_vars[i] = j
-            j += 1
-            
-    relations = []
-    row = 0
-    for i in range(len_col): #not including last column
-        
-        aux = []        
-        if i not in pivots:
-            aux = [dict_free_vars[i]]
-            row += 1
-            
-        elif i in pivots:
-            j = i+1
-            while i < j < len_col+1:
-                if red_matrix[i-row,j] != 0:
-                        aux.append(dict_free_vars[j])
-                j += 1    
-                
-        relations.append(aux)
-    
-    return [int(len(dict_free_vars)-1),relations]
-
-#print('number of free variables\n',get_num_of_free_vars_and_relations(dim)[0])
-#print('all relations\n',get_num_of_free_vars_and_relations(dim)[1])
-'''
-
-
-def get_num_of_free_vars_and_relations(dim):
-    '''row echelon reduces the augmented matrix representing the equation 
-    partial(Delta(dim))=(Delta(dim-1))partial identifying the positions of the 
-    free columns and the relations determining the pivot columns w/r to these'''
-    
-    #getting the augmented matrix
-    M = Matrix(get_tensor_partial(dim))
-    m = M.shape[1]
-    aug_M = M.col_insert(m, Matrix(get_diag_of_boundary(dim)))
-    
-    #getting the row reduced matrix and the list of pivots
-    red_M = aug_M.rref()[0]
-    pivots = aug_M.rref()[1]
-    
-    #a dictionary mapping from the column number of a free variables to their position in the list of free variables
-    dict_free_vars = {}
-    j = 0
-    for i in range(m+1):
-        if i not in pivots:
-            dict_free_vars[i] = j
-            j += 1
-    
-    relations = []
-    row = 0
-    for i in range(m): #not including last column
-        
-        aux = []        
-        if i not in pivots:
-            aux = [dict_free_vars[i]]
-            row += 1
-            
-        elif i in pivots:
-            j = i+1
-            while i < j < m+1:
-                if red_M[i-row,j] != 0:
-                        aux.append(dict_free_vars[j])
-                j += 1    
-                
-        relations.append(aux)
-    
-    return [int(len(dict_free_vars)-1),relations]
-
-
-#print(get_num_of_free_vars_and_relations(2))
-
 
 
 def get_relations(dim):
@@ -316,7 +225,7 @@ def get_relations(dim):
         
     return relations
 
-#print(get_relations(dim))
+print(get_relations(dim))
 
 
 def get_transp_pairs(dim):
@@ -333,24 +242,4 @@ def get_transp_pairs(dim):
 
     return transp_pairs
 
-print('collection of basis elements related by transposition\n',get_transp_pairs(dim))
-
-
 #print('collection of basis elements related by transposition\n',get_transp_pairs(dim))
-#print(get_num_of_free_vars_and_relations(dim)[1])
-
-'''def get_equations(dim):
-    pairs = get_transp_pairs(dim)
-    n = get_num_of_free_vars_and_relations(dim)[0]
-    rels = get_num_of_free_vars_and_relations(dim)[1]
-    
-    x = symbols('X0:%d'%n)
-    print(x)
-    
-    system = []
-    for pair in pairs:
-        print(rels[pair[0]],rels[pair[1]])
-        rels[pair[0]]
-    
-get_equations(2)
-'''
