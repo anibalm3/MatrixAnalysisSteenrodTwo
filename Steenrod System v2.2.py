@@ -243,3 +243,54 @@ def get_transp_pairs(dim):
     return transp_pairs
 
 #print('collection of basis elements related by transposition\n',get_transp_pairs(dim))
+
+
+def get_equations(dim):
+    '''Returns a list containing the quadratic equations (as equations in sympy) coming from the set-free 
+    condition, i.e., T(Delta) and Delta share no basis elements '''        
+    relations = get_relations(dim)
+    pairs = get_transp_pairs(dim)
+    p = len(relations[0])-1
+    
+    x = IndexedBase('x')# symbols
+    
+    eqs = []
+    for pair in pairs:
+        a = IndexedBase('a')# symbols
+        b = IndexedBase('b')# symbols
+        N, i = symbols('N i')
+            
+        eq = sp.Eq(sp.Sum( a[i]*x[i], (i, 0, N) )*sp.Sum( b[i]*x[i], (i, 0, N) ) )
+        
+        eq = eq.subs(N, p).doit()
+        
+        for i in range(p+1):
+            eq = eq.subs(a[i], relations[pair[0]][i]).doit()
+            eq = eq.subs(b[i], relations[pair[1]][i]).doit()
+            
+        eq = eq.subs(x[p], 1).doit()
+        
+        eqs.append(eq)
+        
+        return eqs
+    
+
+
+sol = [1,0,0,0,1]
+sol = np.array(sol)
+relations = get_relations(dim)
+gens = get_tensor_gr_gen(dim)[dim]
+sol_vect = []
+for rel in relations:
+    rel = np.array(rel)
+    aux = int(rel[-1] + np.sum(rel[:-1]) %2) 
+    print(aux,type(aux))
+    if aux !=0:
+        print(gens,len(gens),len(relations), relations.index(rel))
+        
+    
+
+
+
+
+
