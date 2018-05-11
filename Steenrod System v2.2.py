@@ -316,7 +316,7 @@ def get_relations(dim):
         
     return relations
 
-#print(get_relations(dim))
+print(get_relations(dim))
 
 
 def get_transp_pairs(dim):
